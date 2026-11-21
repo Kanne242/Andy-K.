@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#0b0b0f">
+  <meta name="description" content="AKM Tube – werbefreie Oberfläche, TV-tauglich, für Browser, Handy, Fire TV und Android TV.">
+  <title>AKM Tube</title>
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div id="app">
+    <nav id="sidebar" aria-label="Hauptmenü">
+      <div class="brand"><span class="logo">AKM</span><span class="brand-text">Tube</span></div>
+      <button class="nav-item focusable" data-view="home"><span class="ico">⌂</span><span class="lbl">Start</span></button>
+      <button class="nav-item focusable" data-view="search"><span class="ico">⌕</span><span class="lbl">Suche</span></button>
+      <button class="nav-item focusable" data-view="subs"><span class="ico">▤</span><span class="lbl">Kanäle</span></button>
+      <button class="nav-item focusable" data-view="library"><span class="ico">♫</span><span class="lbl">Bibliothek</span></button>
+      <button class="nav-item focusable" data-view="add"><span class="ico">＋</span><span class="lbl">Hinzufügen</span></button>
+      <button class="nav-item focusable" data-view="settings"><span class="ico">⚙</span><span class="lbl">Einstellungen</span></button>
+    </nav>
+    <main id="main" tabindex="-1"></main>
+  </div>
+
+  <div id="player-layer" hidden>
+    <div id="player-wrap"><div id="yt-player"></div></div>
+    <div id="player-bar">
+      <div id="player-title"></div>
+      <div class="player-buttons">
+        <button class="pbtn focusable" data-act="prev" title="Zurück">⏮</button>
+        <button class="pbtn focusable" data-act="back10" title="-10 s">⟲</button>
+        <button class="pbtn focusable" data-act="toggle" title="Play/Pause">⏯</button>
+        <button class="pbtn focusable" data-act="fwd10" title="+10 s">⟳</button>
+        <button class="pbtn focusable" data-act="next" title="Weiter">⏭</button>
+        <button class="pbtn focusable" data-act="speed" title="Geschwindigkeit">1×</button>
+        <button class="pbtn focusable" data-act="fav" title="Favorit">☆</button>
+        <button class="pbtn focusable" data-act="close" title="Schließen">✕</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast" role="status" aria-live="polite"></div>
+  <script src="app.js"></script>
+</body>
+</html>
