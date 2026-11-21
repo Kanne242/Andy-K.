@@ -54,7 +54,7 @@ In `web/catalog.json` trägst du deine Releases ein. Beim nächsten Start ersche
 ] }
 ```
 
-Unter `"channels"` kannst du Kanäle eintragen, z. B. `"@deinkanal"`. Die erscheinen unter „Kanäle“, sobald ein API-Key hinterlegt ist.
+Unter `"channels"` ist dein Kanal `@andykaymusic242` eingetragen. Die Uploads erscheinen, sobald ein Sync-Server oder API-Key eingerichtet ist.
 Was du in der App löschst, kommt durch den Katalog nicht wieder zurück.
 
 ## Eigene Audio- und Videodateien
@@ -82,6 +82,12 @@ Was du in der App löschst, kommt durch den Katalog nicht wieder zurück.
 **Geräte koppeln:** Am TV unter Einstellungen → Sync „Neuen Code erzeugen“ wählen. Den Code (z. B. `ABCD-EFGH-JKLM`) am Handy eingeben und „Verbinden“ drücken.
 Danach gleichen sich Bibliothek, Favoriten, Weiterschauen und der API-Key automatisch ab. So musst du den langen API-Key nie am TV eintippen.
 Der Code ist der Schlüssel zu deinen Daten, also nicht öffentlich teilen.
+
+## Kanal-Uploads ohne API-Key
+
+Ist ein Sync-Server eingerichtet, holt er die **neuesten 15 Uploads** deines Kanals über den öffentlichen YouTube-Feed. Dafür brauchst du **keinen API-Key**.
+Die Uploads werden anhand des Titels automatisch auf Andy Kay, Comrade East, AK UNIT und PHASE//FORGE verteilt (Regeln in `web/catalog.json`).
+Mit einem API-Key lädt die App stattdessen bis zu 50 Uploads, und die YouTube-Suche ist freigeschaltet.
 
 ## YouTube-API-Key (optional, kostenlos)
 

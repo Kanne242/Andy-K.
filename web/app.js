@@ -159,7 +159,22 @@ async function fetchMeta(p) {
   return { title: p.type === 'video' ? `Video ${p.ytId}` : `Playlist ${p.ytId}`, channel: '' };
 }
 
+/** Kanal-Feeds ohne API-Key: der eigene Sync-Server liest den öffentlichen YouTube-RSS-Feed. */
+const feedServer = () => (state.settings.syncUrl || CFG.syncUrl || '').replace(/\/+$/, '');
+const canFeeds = () => !!(state.settings.apiKey || feedServer());
+async function serverFeed(q) {
+  const r = await fetch(`${feedServer()}/yt/feed?${new URLSearchParams(q)}`);
+  const j = await r.json().catch(() => ({}));
+  if (!r.ok) throw new Error(j.error || 'Feed-Fehler ' + r.status);
+  return j;
+}
+
 async function resolveChannel(p) {
+  if (!state.settings.apiKey) {
+    if (!feedServer()) throw new Error('Für Kanäle: API-Key oder Sync-Server in den Einstellungen eintragen.');
+    const j = await serverFeed(p.channelId ? { channel: p.channelId } : { handle: p.handle });
+    return { id: j.id, title: j.title, thumb: '', uploads: 'UU' + j.id.slice(2) };
+  }
   const params = { part: 'snippet,contentDetails' };
   if (p.channelId) params.id = p.channelId; else params.forHandle = p.handle;
   const j = await yt('channels', params);
@@ -181,7 +196,8 @@ const uploadCache = new Map();
 function cachedUploads(listId) {
   const c = uploadCache.get(listId);
   if (c && Date.now() - c.at < 600000) return c.p;
-  const p = playlistVideos(listId, 50);
+  const p = state.settings.apiKey ? playlistVideos(listId, 50)
+    : serverFeed({ channel: 'UC' + listId.slice(2) }).then((j) => j.videos.map((v) => ({ id: uid(), type: 'video', ...v })));
   uploadCache.set(listId, { at: Date.now(), p });
   p.catch(() => uploadCache.delete(listId));
   return p;
@@ -220,7 +236,7 @@ async function loadCatalog() {
     sec.items.push(...pending); added += pending.length;
     pending.filter((i) => !i.title).forEach(async (i) => { Object.assign(i, await fetchMeta(i), { channel: i.channel }); save(); if (currentView === 'home' && $('#player-layer').hidden) render('home'); });
   }
-  if (state.settings.apiKey) {
+  if (canFeeds()) {
     for (const ch of cat.channels || []) {
       const p = parseInput(ch.url || ch.handle || ch);
       if (!p || p.type !== 'channel') continue;
@@ -373,7 +389,7 @@ const views = {
       html += `<p class="hint">Willkommen bei AKM Tube. Füge unter <b>Hinzufügen</b> YouTube-Links, Playlists oder eigene Audio-/Videodateien hinzu. Mit einem YouTube-API-Key (Einstellungen) gibt es zusätzlich Suche und Kanal-Feeds.</p>`;
     if (cont.length) html += row('Weiterschauen', cont);
     for (const s of state.sections) {
-      const feeds = state.settings.apiKey ? state.channels.filter((c) => c.section === s.id || c.sort?.[s.id]) : [];
+      const feeds = canFeeds() ? state.channels.filter((c) => c.section === s.id || c.sort?.[s.id]) : [];
       if (!feeds.length) { html += row(s.name, s.items, `${s.name}: Video, Playlist oder Datei hinzufügen`); continue; }
       html += `<h2>${esc(s.name)}</h2>`;
       if (s.items.length) html += `<div class="row">${s.items.map((i) => card(i, s.items)).join('')}</div>`;
@@ -389,7 +405,7 @@ const views = {
       <button class="btn focusable">Suchen</button></form><div id="results"></div>`;
   },
   subs() {
-    if (!state.settings.apiKey) return `<h1>Kanäle</h1><p class="hint">Kanal-Feeds benötigen einen YouTube-API-Key (Einstellungen).</p>`;
+    if (!canFeeds()) return `<h1>Kanäle</h1><p class="hint">Kanal-Feeds benötigen einen Sync-Server oder einen YouTube-API-Key (Einstellungen).</p>`;
     let html = `<h1>Kanäle</h1>`;
     if (!state.channels.length) html += `<p class="hint">Noch keine Kanäle. Unter <b>Hinzufügen</b> einen Kanal-Link oder @Handle eingeben.</p>`;
     html += state.channels.map((c) => `<h2>${esc(c.title)}</h2><div class="row" data-feed="${esc(c.uploads)}"><div class="hint">Lade…</div></div>`).join('');
@@ -561,10 +577,10 @@ const afterRender = {
       e.preventDefault();
       Object.assign(state.settings, { apiKey: $('#apikey').value.trim(), autoplay: $('#autoplay').checked, nocookie: $('#nocookie').checked, tvMode: $('#tvmode').value });
       changed(); applyTvMode(); toast('Gespeichert');
-      if (state.settings.apiKey) loadCatalog();
+      if (canFeeds()) loadCatalog();
     });
     const urlVal = () => $('#syncurl') ? $('#syncurl').value : undefined;
-    const run = async (fn, okMsg) => { try { Sync.setStatus('Verbinde…'); await fn(); toast(okMsg); render('settings'); } catch (e) { Sync.setStatus('Fehler: ' + e.message, false); } };
+    const run = async (fn, okMsg) => { try { Sync.setStatus('Verbinde…'); await fn(); toast(okMsg); render('settings'); loadCatalog(); } catch (e) { Sync.setStatus('Fehler: ' + e.message, false); } };
     $('#syncnew')?.addEventListener('click', () => run(() => Sync.connect(Sync.newCode(), urlVal()), 'Sync aktiv – Code auf dem anderen Gerät eingeben'));
     $('#syncjoin')?.addEventListener('click', () => run(() => Sync.connect($('#synccode').value, urlVal()), 'Geräte gekoppelt'));
     $('#syncnow')?.addEventListener('click', () => Sync.pull(false));
