@@ -176,6 +176,24 @@ async function playlistVideos(listId, max = 25) {
   }));
 }
 
+/** Uploads eines Kanals (10 Min. zwischengespeichert, damit mehrere Zeilen nur einen API-Aufruf brauchen). */
+const uploadCache = new Map();
+function cachedUploads(listId) {
+  const c = uploadCache.get(listId);
+  if (c && Date.now() - c.at < 600000) return c.p;
+  const p = playlistVideos(listId, 50);
+  uploadCache.set(listId, { at: Date.now(), p });
+  p.catch(() => uploadCache.delete(listId));
+  return p;
+}
+/** Ordnet ein Upload anhand des Titels einem Projekt-Bereich zu (Kanal-Regel "sort"). */
+const normTitle = (t) => (t || '').toLowerCase().replace(/[^a-z0-9äöüß]/g, '');
+function sectionForUpload(ch, v) {
+  const t = normTitle(v.title);
+  for (const [sec, words] of Object.entries(ch.sort || {})) if (words.some((w) => t.includes(normTitle(w)))) return sec;
+  return ch.section;
+}
+
 /* =========================================================================
  * AKM-Katalog (catalog.json) – feste Releases für alle Geräte
  * ========================================================================= */
@@ -210,8 +228,9 @@ async function loadCatalog() {
       try {
         const c = await resolveChannel(p); seen.add(k);
         if (ch.section) c.section = ch.section;
+        if (ch.sort) c.sort = ch.sort;
         const ex = state.channels.find((x) => x.id === c.id);
-        if (ex) { if (ch.section && !ex.section) { ex.section = ch.section; added++; } } else { state.channels.push(c); added++; }
+        if (ex) { if (ch.section && !ex.section) ex.section = ch.section; if (ch.sort) ex.sort = ch.sort; added++; } else { state.channels.push(c); added++; }
       } catch {}
     }
   }
@@ -354,10 +373,11 @@ const views = {
       html += `<p class="hint">Willkommen bei AKM Tube. Füge unter <b>Hinzufügen</b> YouTube-Links, Playlists oder eigene Audio-/Videodateien hinzu. Mit einem YouTube-API-Key (Einstellungen) gibt es zusätzlich Suche und Kanal-Feeds.</p>`;
     if (cont.length) html += row('Weiterschauen', cont);
     for (const s of state.sections) {
-      const feeds = state.settings.apiKey ? state.channels.filter((c) => c.section === s.id) : [];
-      if (!s.items.length && feeds.length) html += `<h2>${esc(s.name)}</h2>`;
-      else html += row(s.name, s.items, `${s.name}: Video, Playlist oder Datei hinzufügen`);
-      for (const c of feeds) html += `${s.items.length ? `<h2>${esc(s.name)} · Neueste Uploads</h2>` : ''}<div class="row" data-feed="${esc(c.uploads)}"><div class="hint">Lade Uploads von ${esc(c.title)}…</div></div>`;
+      const feeds = state.settings.apiKey ? state.channels.filter((c) => c.section === s.id || c.sort?.[s.id]) : [];
+      if (!feeds.length) { html += row(s.name, s.items, `${s.name}: Video, Playlist oder Datei hinzufügen`); continue; }
+      html += `<h2>${esc(s.name)}</h2>`;
+      if (s.items.length) html += `<div class="row">${s.items.map((i) => card(i, s.items)).join('')}</div>`;
+      for (const c of feeds) html += `<div class="row" data-feed="${esc(c.uploads)}" data-ch="${esc(c.id)}" data-sec="${esc(s.id)}"><div class="hint">Lade Uploads von ${esc(c.title)}…</div></div>`;
     }
     if (state.favorites.length) html += row('Favoriten', state.favorites);
     return html;
@@ -495,7 +515,10 @@ const afterRender = {
   subs() {
     document.querySelectorAll('[data-feed]').forEach(async (el) => {
       try {
-        const vids = await playlistVideos(el.dataset.feed, 20);
+        let vids = await cachedUploads(el.dataset.feed);
+        const c = el.dataset.sec && state.channels.find((x) => x.id === el.dataset.ch);
+        if (c) vids = vids.filter((v) => sectionForUpload(c, v) === el.dataset.sec);
+        if (!vids.length && el.dataset.sec) { el.innerHTML = '<div class="hint">Noch keine Uploads für dieses Projekt.</div>'; return; }
         el.innerHTML = vids.map((v) => card(v, vids)).join('') || '<div class="hint">Keine Videos.</div>';
       } catch (err) { el.innerHTML = `<div class="hint">Fehler: ${esc(err.message)}</div>`; }
     });

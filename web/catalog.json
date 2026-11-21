@@ -26,7 +26,22 @@
     {
       "handle": "@andykaymusic242",
       "section": "andykay",
-      "_info": "Neueste Uploads erscheinen in der Andy-Kay-Zeile (benötigt API-Key)"
+      "sort": {
+        "comradeeast": [
+          "Comrade East"
+        ],
+        "akunit": [
+          "AK UNIT",
+          "AK-UNIT",
+          "AKUNIT"
+        ],
+        "phaseforge": [
+          "PHASE//FORGE",
+          "Phase Forge",
+          "PHASEFORGE"
+        ]
+      },
+      "_info": "Uploads werden per Titel auf die Projekte verteilt; ohne Treffer -> 'section'. Benötigt YouTube-API-Key."
     }
   ]
 }
