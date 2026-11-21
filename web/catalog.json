@@ -1,10 +1,32 @@
 {
-  "_info": "AKM-Katalog: Hier deine Releases eintragen. Sie erscheinen automatisch auf allen Geräten. 'url' = YouTube-Link, Playlist-Link oder direkter Link auf eine Audio-/Videodatei (WAV, FLAC, MP3, MP4 ...). 'title' ist optional.",
+  "_info": "AKM-Katalog: Hier deine Releases eintragen. Sie erscheinen automatisch auf allen Geräten. 'url' = YouTube-Link, Playlist-Link oder direkter Link auf eine Audio-/Videodatei (WAV, FLAC, MP3, MP4 ...). 'title' ist optional. 'channels': Kanal-Handle + Bereich, dessen neueste Uploads auf der Startseite erscheinen (benötigt YouTube-API-Key).",
   "sections": [
-    { "id": "andykay", "name": "Andy Kay", "items": [] },
-    { "id": "comradeeast", "name": "Comrade East", "items": [] },
-    { "id": "akunit", "name": "AK UNIT", "items": [] },
-    { "id": "phaseforge", "name": "PHASE//FORGE", "items": [] }
+    {
+      "id": "andykay",
+      "name": "Andy Kay",
+      "items": []
+    },
+    {
+      "id": "comradeeast",
+      "name": "Comrade East",
+      "items": []
+    },
+    {
+      "id": "akunit",
+      "name": "AK UNIT",
+      "items": []
+    },
+    {
+      "id": "phaseforge",
+      "name": "PHASE//FORGE",
+      "items": []
+    }
   ],
-  "channels": []
+  "channels": [
+    {
+      "handle": "@andykaymusic242",
+      "section": "andykay",
+      "_info": "Neueste Uploads erscheinen in der Andy-Kay-Zeile (benötigt API-Key)"
+    }
+  ]
 }

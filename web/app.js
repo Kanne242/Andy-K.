@@ -207,7 +207,12 @@ async function loadCatalog() {
       const p = parseInput(ch.url || ch.handle || ch);
       if (!p || p.type !== 'channel') continue;
       const k = 'ch:' + (p.channelId || p.handle); if (seen.has(k)) continue;
-      try { const c = await resolveChannel(p); seen.add(k); if (!state.channels.some((x) => x.id === c.id)) { state.channels.push(c); added++; } } catch {}
+      try {
+        const c = await resolveChannel(p); seen.add(k);
+        if (ch.section) c.section = ch.section;
+        const ex = state.channels.find((x) => x.id === c.id);
+        if (ex) { if (ch.section && !ex.section) { ex.section = ch.section; added++; } } else { state.channels.push(c); added++; }
+      } catch {}
     }
   }
   state.meta.catalogSeen = [...seen];
@@ -348,7 +353,12 @@ const views = {
     if (!state.sections.some((s) => s.items.length) && !state.channels.length)
       html += `<p class="hint">Willkommen bei AKM Tube. Füge unter <b>Hinzufügen</b> YouTube-Links, Playlists oder eigene Audio-/Videodateien hinzu. Mit einem YouTube-API-Key (Einstellungen) gibt es zusätzlich Suche und Kanal-Feeds.</p>`;
     if (cont.length) html += row('Weiterschauen', cont);
-    for (const s of state.sections) html += row(s.name, s.items, `${s.name}: Video, Playlist oder Datei hinzufügen`);
+    for (const s of state.sections) {
+      const feeds = state.settings.apiKey ? state.channels.filter((c) => c.section === s.id) : [];
+      if (!s.items.length && feeds.length) html += `<h2>${esc(s.name)}</h2>`;
+      else html += row(s.name, s.items, `${s.name}: Video, Playlist oder Datei hinzufügen`);
+      for (const c of feeds) html += `${s.items.length ? `<h2>${esc(s.name)} · Neueste Uploads</h2>` : ''}<div class="row" data-feed="${esc(c.uploads)}"><div class="hint">Lade Uploads von ${esc(c.title)}…</div></div>`;
+    }
     if (state.favorites.length) html += row('Favoriten', state.favorites);
     return html;
   },
@@ -383,7 +393,8 @@ const views = {
         ${s.items.length ? '' : `<button class="btn danger focusable" data-secdel="${s.id}">Bereich löschen</button>`}</div>`;
     });
     if (state.channels.length) {
-      html += `<h2>Kanäle</h2><div class="list">${state.channels.map((c) => `<div class="list-item"><img src="${esc(c.thumb)}" alt=""><div class="grow"><div class="title">${esc(c.title)}</div></div>
+      html += `<h2>Kanäle</h2><div class="list">${state.channels.map((c) => `<div class="list-item"><img src="${esc(c.thumb)}" alt=""><div class="grow"><div class="title">${esc(c.title)}</div><div class="sub">Neueste Uploads auf der Startseite in:</div></div>
+        <select class="focusable" data-chsec="${c.id}"><option value="">– nur unter „Kanäle“ –</option>${state.sections.map((s) => `<option value="${s.id}" ${c.section === s.id ? 'selected' : ''}>${esc(s.name)}</option>`).join('')}</select>
         <button class="btn danger focusable" data-delch="${c.id}">✕</button></div>`).join('')}</div>`;
     }
     html += `<h2>Neuer Bereich</h2><form class="search-bar" id="section-form"><input type="text" id="secname" class="focusable" placeholder="z. B. DJ-Sets, Pre-Vinyl-Master"><button class="btn focusable">Anlegen</button></form>`;
@@ -480,6 +491,7 @@ const afterRender = {
     });
     if (views._lastQ) $('#search-form').requestSubmit();
   },
+  home() { afterRender.subs(); },
   subs() {
     document.querySelectorAll('[data-feed]').forEach(async (el) => {
       try {
@@ -526,6 +538,7 @@ const afterRender = {
       e.preventDefault();
       Object.assign(state.settings, { apiKey: $('#apikey').value.trim(), autoplay: $('#autoplay').checked, nocookie: $('#nocookie').checked, tvMode: $('#tvmode').value });
       changed(); applyTvMode(); toast('Gespeichert');
+      if (state.settings.apiKey) loadCatalog();
     });
     const urlVal = () => $('#syncurl') ? $('#syncurl').value : undefined;
     const run = async (fn, okMsg) => { try { Sync.setStatus('Verbinde…'); await fn(); toast(okMsg); render('settings'); } catch (e) { Sync.setStatus('Fehler: ' + e.message, false); } };
@@ -586,6 +599,11 @@ document.addEventListener('click', (e) => {
 });
 
 // Rechtsklick / langes Drücken auf eine Karte: Favorit umschalten
+document.addEventListener('change', (e) => {
+  const cs = e.target.closest('[data-chsec]');
+  if (cs) { const c = state.channels.find((x) => x.id === cs.dataset.chsec); if (c) { c.section = cs.value || undefined; changed(); toast('Gespeichert'); } }
+});
+
 document.addEventListener('contextmenu', (e) => {
   const c = e.target.closest('[data-card]'); if (!c) return;
   e.preventDefault(); toggleFav(cardRegistry.get(c.id)?.item);
