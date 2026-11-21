@@ -26,7 +26,12 @@
   </div>
 
   <div id="player-layer" hidden>
-    <div id="player-wrap"><div id="yt-player"></div></div>
+    <div id="player-wrap">
+      <div id="yt-box"><div id="yt-player"></div></div>
+      <video id="media-el" playsinline preload="metadata" hidden></video>
+      <div id="audio-art" hidden><div class="bars"><span></span><span></span><span></span><span></span><span></span></div>
+        <div class="art-title"></div><div class="art-sub"></div></div>
+    </div>
     <div id="player-bar">
       <div id="player-title"></div>
       <div class="player-buttons">
@@ -43,6 +48,7 @@
   </div>
 
   <div id="toast" role="status" aria-live="polite"></div>
+  <script src="config.js"></script>
   <script src="app.js"></script>
 </body>
 </html>

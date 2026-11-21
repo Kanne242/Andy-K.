@@ -8,7 +8,10 @@ Eine Video-App in der Art von SmartTube, für **Browser, Handy, Fire TV und Andr
 - „Weiterschauen“ mit gespeicherter Position, Favoriten, Autoplay, Abspielgeschwindigkeit
 - Ohne Shorts, ohne Empfehlungs-Feed und ohne Kommentare, also keine Ablenkung
 - Optional mit eigenem YouTube-API-Key: Suche und Kanal-Feeds (neueste Uploads)
-- Datenschutz-Modus (youtube-nocookie.com), Backup per Export/Import zum Übertragen zwischen Geräten
+- **Eigene Dateien abspielen:** WAV, FLAC, AIFF, MP3, M4A, MP4 … per Link (eigener Webspace, Dropbox) oder direkt vom Gerät
+- **AKM-Katalog** (`web/catalog.json`): Releases einmal eintragen, dann erscheinen sie auf allen Geräten
+- **Sync zwischen Handy, Browser und TV** über einen Kopplungscode (eigener kleiner Server, kostenlos bei Cloudflare)
+- Datenschutz-Modus (youtube-nocookie.com), zusätzlich Backup per Export/Import
 
 > Abgespielt wird über den **offiziellen YouTube-Player**. Werbung wird von YouTube gesteuert und
 > nicht entfernt. Damit bleibt die App rechtlich sauber und kann auch als AKM-Produkt genutzt werden.
@@ -19,6 +22,7 @@ Eine Video-App in der Art von SmartTube, für **Browser, Handy, Fire TV und Andr
 |---|---|
 | `web/` | Die eigentliche App (HTML/CSS/JS, PWA, ohne Build-Schritt) |
 | `android/` | Kleine Android-Hülle (WebView) für Fire TV, Android TV und Android-Handys |
+| `server/` | Sync-Server: Cloudflare Worker (`worker.js`) oder Node.js zum Selbst-Hosten (`node-server.js`) |
 | `.github/workflows/android.yml` | Baut die APK automatisch bei jedem Push |
 
 ## Browser und Handy
@@ -37,6 +41,47 @@ Lokal testen: `cd web && python3 -m http.server 8080`, dann http://localhost:808
 4. Die App erscheint danach mit eigenem Banner im TV-Launcher.
 
 Die APK kann auch ganz normal auf Android-Handys installiert werden.
+
+## AKM-Katalog (deine Releases)
+
+In `web/catalog.json` trägst du deine Releases ein. Beim nächsten Start erscheinen sie auf jedem Gerät:
+
+```json
+{ "id": "phaseforge", "name": "PHASE//FORGE", "items": [
+    { "url": "https://youtu.be/VIDEO-ID" },
+    { "url": "https://www.youtube.com/playlist?list=PL…", "title": "PHASE//FORGE – Alle Releases" },
+    { "url": "https://deinserver.de/previews/track-01.mp3", "title": "Track 01 (Club Master Preview)" }
+] }
+```
+
+Unter `"channels"` kannst du Kanäle eintragen, z. B. `"@deinkanal"`. Die erscheinen unter „Kanäle“, sobald ein API-Key hinterlegt ist.
+Was du in der App löschst, kommt durch den Katalog nicht wieder zurück.
+
+## Eigene Audio- und Videodateien
+
+- **Per Link (auf allen Geräten):** Datei auf den eigenen Webspace (HTTPS) oder in Dropbox legen und den Link unter „Hinzufügen“ einfügen.
+  Dropbox-Freigabelinks werden automatisch in Direktlinks umgewandelt.
+- **Vom Gerät:** „Hinzufügen → Dateien auswählen…“. Die Datei bleibt auf diesem Gerät und wird nicht synchronisiert.
+- Formate: MP3, M4A/AAC, WAV und MP4 laufen überall. FLAC, OGG und WebM laufen auf Android und Fire TV ab etwa Fire OS 6 sowie in Chrome und Firefox.
+  AIFF spielt nur Safari ab. Für Pre-Vinyl- und Club-Master also am besten WAV oder FLAC.
+
+## Sync zwischen Geräten einrichten (einmalig, ca. 10 Minuten)
+
+**Variante A: Cloudflare (kostenlos, empfohlen)**
+1. Ein kostenloses Konto auf cloudflare.com anlegen. Node.js muss auf dem PC installiert sein.
+2. Im Ordner `server/` ausführen:
+   ```bash
+   npx wrangler login
+   npx wrangler kv namespace create SYNC      # ausgegebene id in wrangler.toml eintragen
+   npx wrangler deploy                         # zeigt die Adresse, z. B. https://akmtube-sync.<name>.workers.dev
+   ```
+3. Die Adresse in `web/config.js` bei `syncUrl` eintragen. Dann muss sie auf keinem Gerät mehr eingetippt werden.
+
+**Variante B: eigener Server:** `node server/node-server.js` (Node 18+), betrieben hinter HTTPS.
+
+**Geräte koppeln:** Am TV unter Einstellungen → Sync „Neuen Code erzeugen“ wählen. Den Code (z. B. `ABCD-EFGH-JKLM`) am Handy eingeben und „Verbinden“ drücken.
+Danach gleichen sich Bibliothek, Favoriten, Weiterschauen und der API-Key automatisch ab. So musst du den langen API-Key nie am TV eintippen.
+Der Code ist der Schlüssel zu deinen Daten, also nicht öffentlich teilen.
 
 ## YouTube-API-Key (optional, kostenlos)
 

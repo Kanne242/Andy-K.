@@ -1,0 +1,10 @@
+{
+  "_info": "AKM-Katalog: Hier deine Releases eintragen. Sie erscheinen automatisch auf allen Geräten. 'url' = YouTube-Link, Playlist-Link oder direkter Link auf eine Audio-/Videodatei (WAV, FLAC, MP3, MP4 ...). 'title' ist optional.",
+  "sections": [
+    { "id": "andykay", "name": "Andy Kay", "items": [] },
+    { "id": "comradeeast", "name": "Comrade East", "items": [] },
+    { "id": "akunit", "name": "AK UNIT", "items": [] },
+    { "id": "phaseforge", "name": "PHASE//FORGE", "items": [] }
+  ],
+  "channels": []
+}

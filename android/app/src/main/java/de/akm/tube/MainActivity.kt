@@ -7,6 +7,7 @@ import android.net.Uri
 import android.os.Bundle
 import android.view.View
 import android.view.WindowManager
+import android.webkit.ValueCallback
 import android.webkit.WebChromeClient
 import android.webkit.WebResourceRequest
 import android.webkit.WebResourceResponse
@@ -26,6 +27,7 @@ class MainActivity : Activity() {
     private lateinit var root: FrameLayout
     private var fullscreenView: View? = null
     private var fullscreenCallback: WebChromeClient.CustomViewCallback? = null
+    private var fileCallback: ValueCallback<Array<Uri>>? = null
 
     private val assetLoader by lazy {
         WebViewAssetLoader.Builder()
@@ -79,6 +81,22 @@ class MainActivity : Activity() {
                 root.addView(view, FrameLayout.LayoutParams(-1, -1))
                 web.visibility = View.GONE
             }
+            // Dateiauswahl für "Dateien vom Gerät" (eigene Audio-/Videodateien)
+            override fun onShowFileChooser(view: WebView, callback: ValueCallback<Array<Uri>>, params: FileChooserParams): Boolean {
+                fileCallback?.onReceiveValue(null)
+                fileCallback = callback
+                val pick = Intent(Intent.ACTION_GET_CONTENT).apply {
+                    addCategory(Intent.CATEGORY_OPENABLE)
+                    type = "*/*"
+                    putExtra(Intent.EXTRA_MIME_TYPES, arrayOf("audio/*", "video/*", "application/json"))
+                    putExtra(Intent.EXTRA_ALLOW_MULTIPLE, params.mode == FileChooserParams.MODE_OPEN_MULTIPLE)
+                }
+                return try {
+                    startActivityForResult(Intent.createChooser(pick, "Datei wählen"), REQ_FILE); true
+                } catch (e: Exception) {
+                    fileCallback = null; false
+                }
+            }
             override fun onHideCustomView() {
                 fullscreenView?.let { root.removeView(it) }
                 fullscreenView = null
@@ -111,6 +129,21 @@ class MainActivity : Activity() {
             }
         }
     }
+
+    @Deprecated("Activity-Result-API ist für diese schlanke Hülle nicht nötig")
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        @Suppress("DEPRECATION") super.onActivityResult(requestCode, resultCode, data)
+        if (requestCode != REQ_FILE) return
+        val uris = mutableListOf<Uri>()
+        if (resultCode == RESULT_OK && data != null) {
+            data.clipData?.let { c -> for (i in 0 until c.itemCount) uris.add(c.getItemAt(i).uri) }
+            if (uris.isEmpty()) data.data?.let { uris.add(it) }
+        }
+        fileCallback?.onReceiveValue(if (uris.isEmpty()) null else uris.toTypedArray())
+        fileCallback = null
+    }
+
+    companion object { private const val REQ_FILE = 4711 }
 
     override fun onPause() { super.onPause(); web.onPause() }
     override fun onResume() { super.onResume(); web.onResume() }
