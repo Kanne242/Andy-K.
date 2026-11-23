@@ -5,3 +5,4 @@ android/local.properties
 *.iml
 .idea/
 server/data/
+android/*.keystore

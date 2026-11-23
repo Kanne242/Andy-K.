@@ -34,13 +34,34 @@ Lokal testen: `cd web && python3 -m http.server 8080`, dann http://localhost:808
 
 ## Fire TV und Android TV
 
-1. Auf GitHub unter **Actions → „Android / Fire TV APK“** den letzten Lauf öffnen und das Artefakt **AKMTube-apk** herunterladen (ZIP mit der `.apk`).
-2. **Fire TV:** Einstellungen → Mein Fire TV → Entwickleroptionen → „Apps unbekannter Herkunft“ aktivieren.
-   Dann die App **Downloader** installieren und die APK per Link laden, z. B. über Dropbox oder Google Drive.
-3. **Android TV / Google TV:** genauso über Downloader, alternativ per `adb install AKMTube.apk`.
-4. Die App erscheint danach mit eigenem Banner im TV-Launcher.
+**Direkter Download (immer die neueste Version):**
+https://github.com/Kanne242/Andy-K./releases/latest/download/AKMTube.apk
 
-Die APK kann auch ganz normal auf Android-Handys installiert werden.
+1. **Fire TV:** Einstellungen → Mein Fire TV → Entwickleroptionen → „Apps unbekannter Herkunft“ aktivieren.
+   Falls die Entwickleroptionen fehlen: Einstellungen → Mein Fire TV → Info → 7× auf den Gerätenamen klicken.
+2. Die App **Downloader** (von AFTVnews) aus dem Amazon App Store installieren.
+3. In Downloader den Link oben eingeben, danach auf „Installieren“ klicken.
+   Tipp: Unter aftv.news kannst du dir einen kurzen Zahlencode für den Link erstellen, das tippt sich am TV leichter.
+4. **Android TV / Google TV:** genauso über Downloader, alternativ per `adb install AKMTube.apk`.
+5. **Updates:** Den gleichen Link erneut laden und installieren. Die Bibliothek bleibt erhalten.
+
+Die APK läuft auch auf Android-Handys.
+
+### App-Schlüssel (einmalig, für reibungslose Updates)
+Damit jede neue Version sich über die alte installieren lässt, braucht der Build einen festen Schlüssel.
+Er liegt **nicht** im Repo, sondern als verschlüsseltes Secret:
+Repo → Settings → Secrets and variables → Actions → „New repository secret“:
+- `AKM_KEYSTORE_BASE64`: der Inhalt der Datei `akmtube.keystore.base64.txt`
+- `AKM_KEYSTORE_PASSWORD`: das zugehörige Passwort
+
+Ohne diese Secrets wird mit einem wechselnden Debug-Schlüssel signiert. Dann musst du vor jedem Update die alte App deinstallieren.
+
+## Browser-Version (GitHub Pages)
+
+Adresse: **https://kanne242.github.io/Andy-K./**
+Einmalig aktivieren: Repo → Settings → Pages → „Build and deployment“ → Source: **GitHub Actions**.
+Danach wird die Web-App bei jeder Änderung automatisch aktualisiert.
+Am Handy die Adresse öffnen und „Zum Startbildschirm hinzufügen“ wählen.
 
 ## AKM-Katalog (deine Releases)
 
