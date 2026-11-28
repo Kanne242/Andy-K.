@@ -1,0 +1,22 @@
+# systemd-Dienst: Bot läuft rund um die Uhr und startet nach Neustart automatisch.
+# Installation (Raspberry Pi / Linux-Server), Pfad und Benutzer ggf. anpassen:
+#   sudo cp akm-bot.service /etc/systemd/system/
+#   sudo systemctl daemon-reload && sudo systemctl enable --now akm-bot
+#   journalctl -u akm-bot -f        # Live-Protokoll ansehen
+[Unit]
+Description=AKM Trading Bot (Paper-Trading)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+User=pi
+WorkingDirectory=/home/pi/Andy-K./trading-bot
+ExecStart=/usr/bin/python3 run_paper.py
+Restart=always
+RestartSec=30
+# Optional für Telegram:
+# Environment=AKM_TELEGRAM_TOKEN=...
+# Environment=AKM_TELEGRAM_CHAT=...
+
+[Install]
+WantedBy=multi-user.target

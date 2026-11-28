@@ -1,0 +1,4 @@
+daten/
+zustand/
+__pycache__/
+*.tmp
